@@ -8,6 +8,15 @@ group = 'cl.thisisalexis'
 version = '1.0.0-SNAPSHOT'
 sourceCompatibility = '1.8'
 
+
+if (hasProperty('buildScan')) {
+	buildScan {
+		termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+		termsOfServiceAgree = 'yes'
+	}
+}
+
+// A way to ask the gradle, not to create an bootable jar of the Spring boot app (not require a main method)
 bootJar {
 	enabled = false
 }
