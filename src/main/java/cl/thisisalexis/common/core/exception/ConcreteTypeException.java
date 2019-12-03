@@ -1,16 +1,22 @@
 package cl.thisisalexis.common.core.exception;
 
-public enum AbstractTypeException implements TypeException {
+/**
+ * A concrete implementation of TypeException interface to describe different types of Exceptions in the application
+ *
+ * @author Alexis Bravo
+ */
+public enum ConcreteTypeException implements TypeException {
 
     ENTRY_DATA_VALIDATION(Integer.valueOf(400), "Validation", "An error validating entry data"),
     EXTERNAL_RESOURCE_ERROR(Integer.valueOf(501), "External resource problem", "An error produced by an external resource"),
+    AUTHORIZATION(Integer.valueOf(403), "Authorization Error", "Unauthorized to access resource"),
     INTERNAL_ERROR(Integer.valueOf(500), "Internal error", "An unexpected internal error in the app");
 
     private Integer identifier;
     private String name;
     private String description;
 
-    AbstractTypeException(Integer identifier, String name, String description) {
+    ConcreteTypeException(Integer identifier, String name, String description) {
         this.identifier = identifier;
         this.name = name;
         this.description = description;
