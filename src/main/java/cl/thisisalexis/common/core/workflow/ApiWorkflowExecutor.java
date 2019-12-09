@@ -12,6 +12,15 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.ValidationException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -33,6 +42,8 @@ public class ApiWorkflowExecutor {
     private ApplicationContext applicationContext;
     private Class<? extends Executor> executor;
     private ExecutorRequest executorRequest;
+    private List<Validator> validators;
+    private Errors errors; //TODO Implement this
 
     public static ApiWorkflowExecutor getInstance() {
         return new ApiWorkflowExecutor();
@@ -44,6 +55,13 @@ public class ApiWorkflowExecutor {
 
     public void setExecutor(Class<? extends Executor> executor) {
         this.executor = executor;
+    }
+
+    public void setValidators(Validator ...addedValidators) {
+        if(null == this.validators) {
+            this.validators = new ArrayList();
+        }
+        this.validators.addAll(Arrays.asList(addedValidators));
     }
 
     public ExecutorRequest getExecutorRequest() {
@@ -66,6 +84,10 @@ public class ApiWorkflowExecutor {
 
             log(executorResponse);
             return ResponseEntity.ok(executorResponse);
+        } catch (ConstraintViolationException e) {
+            return handleConstraintViolationException(e);
+        } catch (ValidationException e) {
+            return handledValidationException(e);
         } catch (AbstractAppException e) {
             return handledAbstractException(e);
         } catch (Exception e) {
@@ -73,10 +95,32 @@ public class ApiWorkflowExecutor {
         }
     }
 
+    private ResponseEntity<ExecutorResponse> handleConstraintViolationException(ConstraintViolationException e) {
+        logWithError(e);
+        String message = "";
+        for (ConstraintViolation constraintViolation : e.getConstraintViolations()) {
+            message += constraintViolation.getMessageTemplate() !=
+                    null ? constraintViolation.getMessageTemplate() : "Error in " + constraintViolation.getPropertyPath() + ". ";
+        }
+
+        ErrorExecutorResponse errorApiResponse = getErrorApiResponse(message, ConcreteTypeException.PERSISTENCE_VALIDATION);
+        HttpStatus httpStatus = getErrorResponseHttpStatus(ConcreteTypeException.PERSISTENCE_VALIDATION);
+
+        return ResponseEntity.status(httpStatus).body(errorApiResponse);
+    }
+
+    private ResponseEntity<ExecutorResponse> handledValidationException(ValidationException e) {
+        logWithError(e);
+        ErrorExecutorResponse errorApiResponse = getErrorApiResponse(e.getMessage(), ConcreteTypeException.ENTRY_DATA_VALIDATION);
+        HttpStatus httpStatus = getErrorResponseHttpStatus(ConcreteTypeException.ENTRY_DATA_VALIDATION);
+
+        return ResponseEntity.status(httpStatus).body(errorApiResponse);
+    }
+
     private ResponseEntity<ExecutorResponse> handledAbstractException(AbstractAppException e) {
         logWithError(e);
 
-        ErrorExecutorResponse errorApiResponse = getErrorApiResponse(e);
+        ErrorExecutorResponse errorApiResponse = getErrorApiResponse(e.getMessage(), e.getTypeException());
         HttpStatus httpStatus = getErrorResponseHttpStatus(e.getTypeException());
 
         return ResponseEntity.status(httpStatus).body(errorApiResponse);
@@ -94,10 +138,10 @@ public class ApiWorkflowExecutor {
         return httpStatus;
     }
 
-    private ErrorExecutorResponse getErrorApiResponse(AbstractAppException e) {
+    private ErrorExecutorResponse getErrorApiResponse(String message, TypeException typeException) {
         ErrorExecutorResponse errorApiResponse = new ErrorExecutorResponse();
-        errorApiResponse.setMessage(e.getMessage());
-        errorApiResponse.setTypeException(e.getTypeException());
+        errorApiResponse.setMessage(message);
+        errorApiResponse.setTypeException(typeException);
         return errorApiResponse;
     }
 
@@ -118,6 +162,12 @@ public class ApiWorkflowExecutor {
     public void logWithError(Exception e) {
         logger.warn("API Service " + this.executor + " executed with error", e);
         logger.warn("Service Request", this.executorRequest);
+    }
+
+    private void validate() {
+        for (Validator validator : this.validators) {
+            validator.validate(getExecutorRequest(), errors);
+        }
     }
 
 }

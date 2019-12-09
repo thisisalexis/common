@@ -8,6 +8,7 @@ package cl.thisisalexis.common.core.exception;
 public enum ConcreteTypeException implements TypeException {
 
     ENTRY_DATA_VALIDATION(Integer.valueOf(400), "Validation", "An error validating entry data"),
+    PERSISTENCE_VALIDATION(Integer.valueOf(400), "Persistence Validation", "Database Constraint Validation"),
     EXTERNAL_RESOURCE_ERROR(Integer.valueOf(501), "External resource problem", "An error produced by an external resource"),
     AUTHORIZATION(Integer.valueOf(403), "Authorization Error", "Unauthorized to access resource"),
     INTERNAL_ERROR(Integer.valueOf(500), "Internal error", "An unexpected internal error in the app");

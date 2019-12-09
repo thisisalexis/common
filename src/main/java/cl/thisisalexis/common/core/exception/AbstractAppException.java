@@ -18,6 +18,10 @@ public abstract class AbstractAppException extends Exception {
         super();
     }
 
+    public AbstractAppException(Throwable cause) {
+        super(cause);
+    }
+
     public AbstractAppException(TypeException typeException) {
         super();
         this.typeException = typeException;

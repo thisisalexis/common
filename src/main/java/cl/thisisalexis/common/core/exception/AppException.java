@@ -6,4 +6,10 @@ package cl.thisisalexis.common.core.exception;
  * @author Alexis Bravo
  */
 public class AppException extends AbstractAppException {
+
+    public AppException(Throwable cause) {
+        super(cause);
+        setTypeException(ConcreteTypeException.INTERNAL_ERROR);
+    }
+
 }
